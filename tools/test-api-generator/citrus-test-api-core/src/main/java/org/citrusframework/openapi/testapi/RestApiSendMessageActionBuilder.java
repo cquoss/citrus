@@ -478,6 +478,17 @@ public class RestApiSendMessageActionBuilder extends OpenApiClientRequestActionB
             } else if (value instanceof List<?> list) {
                 valueToSet = list.stream().map(element -> element instanceof String stringValue
                     ? context.replaceDynamicContentInString(stringValue) : element).toList();
+            } else if (value != null && value.getClass().isArray()
+                && !value.getClass().getComponentType().isPrimitive()) {
+                int length = Array.getLength(value);
+                Object replacedArray = Array.newInstance(value.getClass().getComponentType(),
+                    length);
+                for (int i = 0; i < length; i++) {
+                    Object element = Array.get(value, i);
+                    Array.set(replacedArray, i, element instanceof String stringValue
+                        ? context.replaceDynamicContentInString(stringValue) : element);
+                }
+                valueToSet = replacedArray;
             }
             return valueToSet;
         }

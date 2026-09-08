@@ -2068,6 +2068,47 @@ class GeneratedRestApiIT {
     }
 
     /**
+     * Demonstrates that array query parameters, specified as separate elements each
+     * referencing their own citrus variable, are properly resolved when sent.
+     */
+    @Nested
+    class FindPetsByTags implements TestActionSupport {
+
+        @Test
+        @CitrusTestSource(type = TestLoader.SPRING, packageName = "org.citrusframework.openapi.generator.GeneratedApiTest", name = "withFindPetsByTagsTest")
+        void xml() {
+        }
+
+        @Test
+        void java(@CitrusResource TestCaseRunner runner) {
+            runner.variable("tag1", "dog");
+            runner.variable("tag2", "cat");
+
+            runner.when(petApi.sendFindPetsByTags()
+                .tags("${tag1}", "${tag2}")
+                .fork(true));
+
+            runner.then(http().server(httpServer)
+                .receive()
+                .get("/api/v3/pet/findByTags")
+                .message()
+                .validate((message, context) -> assertThat(
+                    ((HttpMessage) message).getQueryParams()).containsExactlyInAnyOrderEntriesOf(
+                    Map.of("tags", List.of("dog", "cat")))));
+
+            runner.then(http().server(httpServer)
+                .send()
+                .response(OK)
+                .message()
+                .contentType(APPLICATION_JSON_VALUE)
+                .body(Resources.create(
+                    "classpath:org/citrusframework/openapi/generator/GeneratedApiTest/payloads/findPetsByTags_response.json")));
+
+            runner.when(petApi.receiveFindPetsByTags(OK));
+        }
+    }
+
+    /**
      * Demonstrates the usage of form data.
      */
     @Nested
